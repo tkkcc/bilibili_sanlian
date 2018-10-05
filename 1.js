@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.1
+// @version      0.0.2
 // @include      https://www.bilibili.com/video/av*
 // @description  推荐投币收藏一键三连
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_addStyle
 // @run-at       document-idle
+// @namespace    https://greasyfork.org/users/164996
 // ==/UserScript==
 const click = s => {
   if (!s) return
@@ -15,22 +16,9 @@ const click = s => {
     const n = document.querySelector(s)
     if (n) n.click()
     else return
-    console.log(n)
   }
   return true
 }
-
-const observe = (s, f) =>
-  new Promise(resolve => {
-    new MutationObserver(function(e) {
-      this.disconnect()
-      f()
-      resolve()
-    }).observe(document.querySelector(s), {
-      childList: true,
-      subtree: true
-    })
-  })
 
 const position = document.querySelector('#arc_toolbar_report span.collect')
 if (!position) return

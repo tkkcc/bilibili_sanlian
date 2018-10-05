@@ -1,8 +1,8 @@
 # bilibili推荐硬币收藏三连
 
-[sleazyfork](https://sleazyfork.org/en/scripts/37122-javlibrary-preview)
+[greasyfork](https://greasyfork.org/en/scripts/372890-bilibili%E4%B8%89%E8%BF%9E)
 
-![](./1.png)
+![](https://raw.githubusercontent.com/tkkcc/bilibili_sanlian/master/1.png)
 
 仅支持新版,毕竟老版没推荐
 
