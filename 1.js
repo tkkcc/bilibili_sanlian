@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.2
+// @version      0.0.3
 // @include      https://www.bilibili.com/video/av*
 // @description  推荐投币收藏一键三连
 // @grant        GM_getValue
@@ -26,9 +26,9 @@ new MutationObserver(function() {
   this.disconnect()
   const app = document.querySelector('div#app>div')
   let like = GM_getValue('like', true)
-  let coin = GM_getValue('coin', 1)
+  let coin = GM_getValue('coin', 0)
   let collect = GM_getValue('collect', true)
-  let collection = GM_getValue('collection', '0')
+  let collection = GM_getValue('collection', '输入收藏夹名')
   const css = `
   span#sanlian>div {
       display:none;
