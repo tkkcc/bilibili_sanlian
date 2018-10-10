@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.4
+// @version      0.0.5
 // @include      https://www.bilibili.com/video/av*
 // @description  推荐投币收藏一键三连
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @grant        GM_addStyle
 // @run-at       document-idle
 // @namespace    https://greasyfork.org/users/164996
 // ==/UserScript==
@@ -94,11 +93,19 @@ new MutationObserver(function() {
     c.toggle('sanlian_on')
     GM_setValue('like', like)
   })
-  coin_btn.addEventListener('click', function() {
+  coin_btn.addEventListener('click', function(e) {
     const c = this.classList
     coin = (coin + 1) % 3
     coin_value.innerHTML = 'x' + coin
     if (coin !== 2) c.toggle('sanlian_on')
+    GM_setValue('coin', coin)
+  })
+  coin_btn.addEventListener('contextmenu', function(e) {
+    e.preventDefault()
+    const c = this.classList
+    coin = (coin + 2) % 3
+    coin_value.innerHTML = 'x' + coin
+    if (coin !== 1) c.toggle('sanlian_on')
     GM_setValue('coin', coin)
   })
   collect_btn.addEventListener('click', function() {
