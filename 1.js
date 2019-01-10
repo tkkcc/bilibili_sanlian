@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.5
+// @version      0.0.6
 // @include      https://www.bilibili.com/video/av*
 // @description  推荐投币收藏一键三连
 // @grant        GM_getValue
@@ -40,6 +40,7 @@ new MutationObserver(function() {
       border-radius: 2px;
       padding:1em;
       cursor: default;
+      z-index: 2;
   }
   span#sanlian span[id^=sanlian_] *{
       color: SlateGrey;
