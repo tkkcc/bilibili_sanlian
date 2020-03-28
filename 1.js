@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.6
+// @version      0.0.7
 // @include      https://www.bilibili.com/video/av*
+// @include      https://www.bilibili.com/video/BV*
 // @description  推荐投币收藏一键三连
 // @grant        GM_getValue
 // @grant        GM_setValue
