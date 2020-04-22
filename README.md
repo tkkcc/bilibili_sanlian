@@ -4,11 +4,6 @@
 
 ![](https://raw.githubusercontent.com/tkkcc/bilibili_sanlian/master/1.png)
 
-20181011 硬币右键减1
+support chrome81+tampermonkey
 
-仅支持新版,毕竟老版没推荐
-
-一个按钮三连,三个按钮切换模式,一个收藏夹名输入,收藏夹要已有的,硬币图标亮时不会再投
-
-chrome69+ 欢迎反馈
-
+一个按钮三连，三个按钮切换模式，一个收藏夹名输入，硬币图标亮时不会再投

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.7
+// @version      0.0.8
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @description  推荐投币收藏一键三连
@@ -12,7 +12,7 @@
 const position = document.querySelector('#arc_toolbar_report span.collect')
 if (!position) return
 
-const click = s => {
+const click = (s) => {
   if (!s) return
   if (s instanceof HTMLElement) s.click()
   else {
@@ -23,7 +23,7 @@ const click = s => {
   return true
 }
 
-new MutationObserver(function() {
+new MutationObserver(function () {
   this.disconnect()
   const app = document.querySelector('div#app>div')
   let like = GM_getValue('like', true)
@@ -59,6 +59,9 @@ new MutationObserver(function() {
   }
   span#sanlian span#sanlian_coin i{
     margin:0;
+  }
+  .bili-dialog-m{
+    display:block;
   }`
   const style = document.createElement('style')
   style.type = 'text/css'
@@ -89,20 +92,22 @@ new MutationObserver(function() {
   const coin_value = document.querySelector('#sanlian_coin span')
   const collect_btn = document.querySelector('#sanlian_collect')
   const collect_value = document.querySelector('#sanlian input')
-  like_btn.addEventListener('click', function() {
+  let dialog_style = style.sheet.rules
+  dialog_style = dialog_style[dialog_style.length - 1].style
+  like_btn.addEventListener('click', function () {
     const c = this.classList
     like = !like
     c.toggle('sanlian_on')
     GM_setValue('like', like)
   })
-  coin_btn.addEventListener('click', function(e) {
+  coin_btn.addEventListener('click', function (e) {
     const c = this.classList
     coin = (coin + 1) % 3
     coin_value.innerHTML = 'x' + coin
     if (coin !== 2) c.toggle('sanlian_on')
     GM_setValue('coin', coin)
   })
-  coin_btn.addEventListener('contextmenu', function(e) {
+  coin_btn.addEventListener('contextmenu', function (e) {
     e.preventDefault()
     const c = this.classList
     coin = (coin + 2) % 3
@@ -110,13 +115,13 @@ new MutationObserver(function() {
     if (coin !== 1) c.toggle('sanlian_on')
     GM_setValue('coin', coin)
   })
-  collect_btn.addEventListener('click', function() {
+  collect_btn.addEventListener('click', function () {
     const c = this.classList
     collect = !collect
     c.toggle('sanlian_on')
     GM_setValue('collect', collect)
   })
-  collect_value.addEventListener('keyup', function() {
+  collect_value.addEventListener('keyup', function () {
     collection = collect_value.value
     GM_setValue('collection', collection)
   })
@@ -126,24 +131,28 @@ new MutationObserver(function() {
   s.addEventListener('mouseout', () => {
     x.style.display = 'none'
   })
-  s.addEventListener('click', async e => {
+  s.addEventListener('click', async (e) => {
     let t
     // http request timeout
     const timeout = 3500
     if (![s, i].includes(e.target)) return
+    dialog_style.display = 'none'
+    let dt = setTimeout(() => {
+      dialog_style.display = 'block'
+    }, timeout)
     // like
     if (like) click('#arc_toolbar_report span.like:not(.on)')
     // coin
     if (coin > 0 && click('#arc_toolbar_report span.coin:not(.on)')) {
-      await new Promise(resolve => {
-        new MutationObserver(function() {
+      await new Promise((resolve) => {
+        new MutationObserver(function () {
           this.disconnect()
           if (coin === 1) click('.mc-box.left-con')
           else click('.mc-box.right-con')
           t = setTimeout(() => {
             click('div.bili-dialog-m div.coin-operated-m i.close')
           }, timeout)
-          new MutationObserver(function(e) {
+          new MutationObserver(function (e) {
             this.disconnect()
             clearTimeout(t)
             resolve()
@@ -156,34 +165,41 @@ new MutationObserver(function() {
     }
     // collect
     if (collect && click('#arc_toolbar_report span.collect')) {
-      new MutationObserver(function(e) {
-        if (e[0].target.nodeName !== 'UL') return
-        this.disconnect()
-        t = document.querySelectorAll(
-          'div.collection-m div.group-list input:not(:checked)+i'
-        )
-        t = [...t].find(i => i.nextSibling.textContent.trim() === collection)
-        if (!click(t)) {
-          click('i.close')
-          return
-        }
-        // offline fallback
-        t = setTimeout(() => {
-          click('i.close')
-        }, timeout)
-        // wait for coin dialog close
-        new MutationObserver(function(e) {
+      await new Promise((resolve) => {
+        new MutationObserver(function (e) {
+          if (e[0].target.nodeName !== 'UL') return
           this.disconnect()
-          clearTimeout(t)
-        }).observe(app, { childList: true })
-        const b = document.querySelector('div.collection-m button.submit-move')
-        if (b.hasAttribute('disabled')) {
-          new MutationObserver(function(e) {
+          t = document.querySelectorAll('div.collection-m div.group-list input+i')
+          // match or first
+          t =
+            [...t].find((i) => i.nextElementSibling.textContent.trim() === collection) ||
+            t[0]
+          // already collect
+          if (!t || t.previousElementSibling.checked || !click(t)) {
+            click('i.close')
+            return resolve()
+          }
+          // offline fallback
+          t = setTimeout(() => {
+            click('i.close')
+          }, timeout)
+          // wait for dialog close
+          new MutationObserver(function () {
             this.disconnect()
-            click(b)
-          }).observe(b, { attributes: true })
-        } else click(b)
-      }).observe(app, { childList: true, subtree: true })
+            clearTimeout(t)
+            resolve()
+          }).observe(app, { childList: true })
+          const b = document.querySelector('div.collection-m button.submit-move')
+          if (b.hasAttribute('disabled')) {
+            new MutationObserver(function () {
+              this.disconnect()
+              click(b)
+            }).observe(b, { attributes: true })
+          } else click(b)
+        }).observe(app, { childList: true, subtree: true })
+      })
     }
+    clearTimeout(dt)
+    dialog_style.display = 'block'
   })
 }).observe(position, { attributes: true })
