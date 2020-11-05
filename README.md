@@ -4,6 +4,6 @@
 
 ![](https://raw.githubusercontent.com/tkkcc/bilibili_sanlian/master/1.png)
 
-support chrome81+tampermonkey
+support chrome86+tampermonkey
 
 一个按钮三连，三个按钮切换模式，一个收藏夹名输入，硬币图标亮时不会再投

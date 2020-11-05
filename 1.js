@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.8
+// @version      0.0.9
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @description  推荐投币收藏一键三连
@@ -25,7 +25,7 @@ const click = (s) => {
 
 new MutationObserver(function () {
   this.disconnect()
-  const app = document.querySelector('div#app>div')
+  const app = document.querySelector('div#app>div.v-wrap')
   let like = GM_getValue('like', true)
   let coin = GM_getValue('coin', 0)
   let collect = GM_getValue('collect', true)
@@ -67,7 +67,8 @@ new MutationObserver(function () {
   style.type = 'text/css'
   style.appendChild(document.createTextNode(css))
   document.head.appendChild(style)
-  position.insertAdjacentHTML(
+  // position.insertAdjacentHTML(        // comprise
+  document.querySelector('#arc_toolbar_report span.collect').insertAdjacentHTML(
     'afterend',
     `<span id=sanlian title=推荐硬币收藏><i class=van-icon-tuodong></i>三连
     <div>
@@ -156,11 +157,11 @@ new MutationObserver(function () {
             this.disconnect()
             clearTimeout(t)
             resolve()
-          }).observe(app, { childList: true })
+          }).observe(app, {childList: true})
           setTimeout(() => {
             click('div.coin-bottom > span')
           }, 0)
-        }).observe(app, { childList: true, subtree: true })
+        }).observe(app, {childList: true, subtree: true})
       })
     }
     // collect
@@ -174,6 +175,7 @@ new MutationObserver(function () {
           t =
             [...t].find((i) => i.nextElementSibling.textContent.trim() === collection) ||
             t[0]
+
           // already collect
           if (!t || t.previousElementSibling.checked || !click(t)) {
             click('i.close')
@@ -188,18 +190,19 @@ new MutationObserver(function () {
             this.disconnect()
             clearTimeout(t)
             resolve()
-          }).observe(app, { childList: true })
+          }).observe(app, {childList: true})
           const b = document.querySelector('div.collection-m button.submit-move')
           if (b.hasAttribute('disabled')) {
             new MutationObserver(function () {
               this.disconnect()
               click(b)
-            }).observe(b, { attributes: true })
+            }).observe(b, {attributes: true})
           } else click(b)
-        }).observe(app, { childList: true, subtree: true })
+        }).observe(app, {childList: true, subtree: true})
       })
     }
     clearTimeout(dt)
     dialog_style.display = 'block'
   })
-}).observe(position, { attributes: true })
+}).observe(position, {attributes: true})
+
