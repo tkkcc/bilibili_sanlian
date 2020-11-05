@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.10
+// @version      0.0.11
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @description  推荐投币收藏一键三连
@@ -60,11 +60,11 @@ new MutationObserver(function () {
   span#sanlian span#sanlian_coin i{
     margin:0;
   }
-  .bili-dialog-m{
-    display:block;
-  }
   .video-toolbar .ops>span{
     width:88px
+  }
+  .bili-dialog-m{
+    display:block;
   }`
   const style = document.createElement('style')
   style.type = 'text/css'
@@ -213,5 +213,3 @@ new MutationObserver(function () {
     dialog_style.display = 'block'
   })
 }).observe(position, {attributes: true})
-
-
