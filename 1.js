@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.9
+// @version      0.0.10
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @description  推荐投币收藏一键三连
@@ -62,11 +62,19 @@ new MutationObserver(function () {
   }
   .bili-dialog-m{
     display:block;
+  }
+  .video-toolbar .ops>span{
+    width:88px
   }`
   const style = document.createElement('style')
   style.type = 'text/css'
   style.appendChild(document.createTextNode(css))
   document.head.appendChild(style)
+  // remove leading space of coin text
+  const coin_text = document.querySelector('#arc_toolbar_report span.coin > i').nextSibling
+  if (coin_text.nodeType == Node.TEXT_NODE) {
+    coin_text.textContent = coin_text.textContent.trim()
+  }
   // position.insertAdjacentHTML(        // comprise
   document.querySelector('#arc_toolbar_report span.collect').insertAdjacentHTML(
     'afterend',
@@ -205,4 +213,5 @@ new MutationObserver(function () {
     dialog_style.display = 'block'
   })
 }).observe(position, {attributes: true})
+
 
