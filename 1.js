@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.13
+// @version      0.0.14
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @include      https://www.bilibili.com/medialist/play/*
@@ -348,7 +348,7 @@ const state = {
       ? this.selector_in_medialist
       : this.selector
     let { collect, app, people } = this.selector
-    ;[collect, app, people] = await waitForAll([collect, app, people])
+    ;[collect, app, people] = await waitForAll([collect, app, people],500,Infinity)
     if (!collect) return
     Object.assign(this.node, { collect, app })
 
