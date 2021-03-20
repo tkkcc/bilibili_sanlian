@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.16
+// @version      0.0.17
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @include      https://www.bilibili.com/medialist/play/*
@@ -48,11 +48,13 @@ const waitForAllByObserver = (
     }
     if (check()) return
     observer_id = new MutationObserver(check)
-    timer_id = setTimeout(() => {
-      observer_id.disconnect()
-      clearTimeout(timer_id)
-      resolve()
-    }, timeout)
+    if (timeout != Infinity) {
+      timer_id = setTimeout(() => {
+        observer_id.disconnect()
+        clearTimeout(timer_id)
+        resolve()
+      }, timeout)
+    }
     observer_id.observe(app, { childList, subtree, attributes })
   })
 }
