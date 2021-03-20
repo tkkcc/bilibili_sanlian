@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.14
+// @version      0.0.15
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @include      https://www.bilibili.com/medialist/play/*
@@ -11,7 +11,10 @@
 // @run-at       document-idle
 // @namespace    https://greasyfork.org/users/164996
 // ==/UserScript==
-const click = s => {
+const find = (selector) => {
+  return document.querySelector(selector)
+}
+const click = (s) => {
   if (!s) return
   if (s instanceof HTMLElement) s.click()
   else {
@@ -21,23 +24,41 @@ const click = s => {
   }
   return true
 }
-const waitForAll = (selectors, delay = 500, timeout = 50000) =>
-  new Promise(resolve => {
-    let max_times = 1 + timeout / delay
-    let times = 0
-    let nodes
-    const f = () => {
-      nodes = selectors.map(i => document.querySelector(i))
-      times = times + 1
-      if (Object.values(nodes).every(v => v != null)) {
+const waitForAllByObserver = (
+  selectors,
+  {
+    app = document.documentElement,
+    timeout = 3000,
+    childList = true,
+    subtree = true,
+    attributes = true,
+    disappear = false,
+  } = {}
+) => {
+  return new Promise((resolve) => {
+    let observer_id
+    let timer_id
+    const check = () => {
+      const nodes = selectors.map((i) => document.querySelector(i))
+      if (Object.values(nodes).every((v) => (disappear ? !v : v))) {
+        if (observer_id != undefined) observer_id.disconnect()
+        if (timer_id != undefined) clearTimeout(timer_id)
         resolve(nodes)
-      } else if (times >= max_times) {
-        resolve([])
-      } else {
-        setTimeout(f, delay)
       }
     }
-    f()
+    if (check()) return
+    observer_id = new MutationObserver(check)
+    timer_id = setTimeout(() => {
+      observer_id.disconnect()
+      clearTimeout(timer_id)
+      resolve()
+    }, timeout)
+    observer_id.observe(app, { childList, subtree, attributes })
+  })
+}
+const sleep = (timeout) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, timeout)
   })
 const state = {
   get(k) {
@@ -57,7 +78,7 @@ const state = {
     like: true,
     coin: 0,
     collect: true,
-    collection: '输入收藏夹名'
+    collection: '输入收藏夹名',
   },
   render() {
     const { like, coin, coin_value, collect, collection } = this.node
@@ -147,12 +168,10 @@ const state = {
     const rules = style.sheet.rules
     this.node.dialog_style = rules[rules.length - 1].style
     // remove leading space of coin text
-    if (!this.is_medialist) {
-      const coin_text = document.querySelector(this.selector.coin + ' i')
-        .nextSibling
-      if (coin_text.nodeType == Node.TEXT_NODE) {
-        coin_text.textContent = coin_text.textContent.trim()
-      }
+    const coin_text = document.querySelector(this.selector.coin + ' i')
+      .nextSibling
+    if (coin_text.nodeType == Node.TEXT_NODE) {
+      coin_text.textContent = coin_text.textContent.trim()
     }
   },
   addNode() {
@@ -167,7 +186,7 @@ const state = {
     sanlian.title = '推荐硬币收藏'
     const sanlian_canvas = sanlian.querySelector('canvas')
     if (sanlian_canvas) sanlian_canvas.remove()
-    sanlian_icon.innerText = this.is_medialist ? '' : ''
+    sanlian_icon.innerText = ''
     sanlian_icon.classList.remove('blue')
     sanlian_icon.classList.add('van-icon-tuodong')
     sanlian_text.textContent = '三连'
@@ -193,36 +212,59 @@ const state = {
       sanlian,
       sanlian_icon,
       sanlian_text,
-      sanlian_panel
+      sanlian_panel,
     })
   },
   addListener() {
     const {
       app,
-      like,
       coin,
       collect,
       collection,
+      dialog_style,
+      like,
       sanlian,
       sanlian_icon,
-      sanlian_text,
       sanlian_panel,
-      dialog_style
+      sanlian_text,
     } = this.node
+
+    const {
+      coin_close,
+      coin_dialog,
+      coin_left,
+      coin_off,
+      coin_right,
+      coin_yes,
+      collect_choice,
+      collect_close,
+      collect_dialog,
+      collect_yes,
+      like_off,
+    } = this.selector
     const selector = this.selector
     const get = this.get.bind(this)
     const set = this.set.bind(this)
     const toggle = this.toggle.bind(this)
-    like.addEventListener('click', function() {
+    like.addEventListener('click', function () {
       toggle('like')
     })
-    coin.addEventListener('click', function() {
+    coin.addEventListener('click', function () {
       set('coin', (get('coin') + 1) % 3)
     })
-    collect.addEventListener('click', function() {
+    collect.addEventListener('click', function () {
       toggle('collect')
     })
-    collection.addEventListener('keyup', function() {
+    like.addEventListener('contextmenu', function () {
+      toggle('like')
+    })
+    coin.addEventListener('contextmenu', function () {
+      set('coin', (get('coin') + 2) % 3)
+    })
+    collect.addEventListener('contextmenu', function () {
+      toggle('collect')
+    })
+    collection.addEventListener('keyup', function () {
       set('collection', collection.value)
     })
     sanlian.addEventListener('mouseover', () => {
@@ -231,136 +273,94 @@ const state = {
     sanlian.addEventListener('mouseout', () => {
       sanlian_panel.style.display = 'none'
     })
-    sanlian.addEventListener('click', async e => {
-      const timeout = 3500
+    const like_handler = async () => {
+      if (get('like')) click(like_off)
+    }
+    const coin_handler = async () => {
+      if (!get('coin') > 0 || !click(coin_off)) return
+      if (!(await waitForAllByObserver([coin_left]))) return
+      if (get('coin') === 1) click(coin_left)
+      else click(coin_right)
+      await sleep(0) // only for visual updating
+      click(coin_yes)
+      click(coin_close)
+      await waitForAllByObserver([coin_dialog], { disappear: true })
+    }
+    const collect_handler = async () => {
+      if (
+        !get('collect') ||
+        !click(selector.collect) ||
+        !(await waitForAllByObserver([collect_choice]))
+      ) {
+        click('i.close')
+        return
+      }
+      const choices = document.querySelectorAll(selector.collect_choice)
+      const choice =
+        [...choices].find(
+          (i) => i.nextElementSibling.textContent.trim() === get('collection')
+        ) || choices[0]
+      // already collect
+      if (
+        !choice ||
+        choice.previousElementSibling.checked ||
+        !click(choice) ||
+        !(await waitForAllByObserver([collect_yes]))
+      ) {
+        click('i.close')
+        return
+      }
+      click(collect_yes)
+      await waitForAllByObserver([collect_dialog], { disappear: true })
+    }
+    sanlian.addEventListener('click', async (e) => {
       if (![sanlian, sanlian_icon, sanlian_text].includes(e.target)) return
       dialog_style.display = 'none'
       const fallback = setTimeout(() => {
         dialog_style.display = 'block'
-      }, timeout)
-      if (get('like')) click(selector.like_off)
-      if (get('coin') > 0 && click(selector.coin_off)) {
-        await new Promise(resolve => {
-          new MutationObserver(function(e) {
-            this.disconnect()
-            if (get('coin') === 1) click(selector.coin_left)
-            else click(selector.coin_right)
-            const fallback = setTimeout(() => {
-              click(selector.coin_close)
-            }, timeout)
-            new MutationObserver(function() {
-              this.disconnect()
-              clearTimeout(fallback)
-              resolve()
-            }).observe(app, { childList: true })
-            setTimeout(() => {
-              click(selector.coin_yes)
-            }, 0)
-          }).observe(app, { childList: true })
-        })
-      }
-      if (get('collect') && click(selector.collect)) {
-        await new Promise(resolve => {
-          new MutationObserver(function(e) {
-            if (e[0].target.nodeName !== 'UL') return
-            this.disconnect()
-            const choices = document.querySelectorAll(
-              'div.collection-m div.group-list input+i'
-            )
-            // match or first
-            const choice =
-              [...choices].find(
-                i =>
-                  i.nextElementSibling.textContent.trim() === get('collection')
-              ) || choices[0]
-            // already collect
-            if (
-              !choice ||
-              choice.previousElementSibling.checked ||
-              !click(choice)
-            ) {
-              click('i.close')
-              return resolve()
-            }
-            const fallback = setTimeout(() => {
-              click('i.close')
-            }, timeout)
-            // wait for dialog close
-            new MutationObserver(function() {
-              this.disconnect()
-              clearTimeout(fallback)
-              resolve()
-            }).observe(app, { childList: true })
-            const yes = document.querySelector(selector.collect_yes)
-            if (yes.hasAttribute('disabled')) {
-              new MutationObserver(function() {
-                this.disconnect()
-                click(yes)
-              }).observe(yes, { attributes: true })
-            } else click(yes)
-          }).observe(app, { childList: true, subtree: true })
-        })
-      }
+      }, 3500)
+      await like_handler()
+      await coin_handler()
+      await collect_handler()
       clearTimeout(fallback)
       dialog_style.display = 'block'
     })
   },
   selector: {
-    app: 'div#app>div.v-wrap',
-    people: 'span.bilibili-player-video-info-people-text',
-    like: '#arc_toolbar_report span.like',
+    app: 'div#app',
     coin: '#arc_toolbar_report span.coin',
-    collect: '#arc_toolbar_report span.collect',
-    like_off: '#arc_toolbar_report span.like:not(.on)',
-    coin_off: '#arc_toolbar_report span.coin:not(.on)',
-    collect_off: '#arc_toolbar_report span.collect:not(.on)',
-    coin_left: '.mc-box.left-con',
-    coin_right: '.mc-box.right-con',
     coin_close: 'div.bili-dialog-m div.coin-operated-m i.close',
-    coin_yes: 'div.coin-bottom > span',
-    collect_yes: 'div.collection-m button.submit-move',
+    collect_close: 'div.bili-dialog-m div.collection-m i.close',
     coin_dialog: '.bili-dialog-m',
+    coin_left: '.mc-box.left-con',
+    coin_off: '#arc_toolbar_report span.coin:not(.on)',
+    coin_right: '.mc-box.right-con',
+    coin_yes: 'div.coin-bottom > span',
+    collect: '#arc_toolbar_report span.collect',
+    collect_choice: 'div.collection-m div.group-list input+i',
     collect_dialog: '.bili-dialog-m',
-  },
-  selector_in_medialist: {
-    app: 'div.container',
+    collect_off: '#arc_toolbar_report span.collect:not(.on)',
+    collect_yes: 'div.collection-m button.submit-move:not([disable])',
+    like: '#arc_toolbar_report span.like',
+    like_off: '#arc_toolbar_report span.like:not(.on)',
     people: 'span.bilibili-player-video-info-people-text',
-    like: '#playContainer div.play-options > ul > li:nth-child(1)',
-    coin: '#playContainer div.play-options > ul > li:nth-child(2)',
-    collect: '#playContainer div.play-options > ul > li:nth-child(3)',
-    like_off:
-      '#playContainer div.play-options > ul > li:nth-child(1) > i:not(.blue)',
-    coin_off:
-      '#playContainer div.play-options > ul > li:nth-child(2) > i:not(.blue)',
-    collect_off:
-      '#playContainer div.play-options > ul > li:nth-child(3) > i:not(.blue)',
-    coin_left: '.play-one-coin',
-    coin_right: '.play-two-coin',
-    coin_close: '.play-coin-close',
-    coin_yes: '.play-coin-btn',
-    collect_yes: 'div.collection-m button.submit-move',
-    coin_dialog: '.play-coin-bg',
-    collect_dialog: '.collection-bg',
   },
   async init() {
-    this.is_medialist = window.location.href.includes('/medialist/')
-    this.selector = this.is_medialist
-      ? this.selector_in_medialist
-      : this.selector
     let { collect, app, people } = this.selector
-    ;[collect, app, people] = await waitForAll([collect, app, people],500,Infinity)
+    ;[collect, app, people] = await waitForAllByObserver(
+      [collect, app, people],
+      { timeout: 60000 }
+    )
     if (!collect) return
     Object.assign(this.node, { collect, app })
-
     this.addStyle()
     this.addNode()
     this.addListener()
-
     this.load(GM_getValue('state'))
     GM_addValueChangeListener('state', (name, old_state, new_state) => {
       if (JSON.stringify(this.state) == new_state) return
       this.load(new_state)
     })
-  }
+  },
 }
 state.init()
