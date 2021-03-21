@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.17
+// @version      0.0.18
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @include      https://www.bilibili.com/medialist/play/*
@@ -285,6 +285,7 @@ const state = {
       else click(coin_right)
       await sleep(0) // only for visual updating
       click(coin_yes)
+      await sleep(0) // only for visual updating
       click(coin_close)
       await waitForAllByObserver([coin_dialog], { disappear: true })
     }
