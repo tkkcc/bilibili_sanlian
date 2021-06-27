@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.19
+// @version      0.0.20
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @include      https://www.bilibili.com/medialist/play/*
@@ -348,7 +348,7 @@ const state = {
     collect_yes: 'div.collection-m button.submit-move:not([disable])',
     like: '#arc_toolbar_report span.like',
     like_off: '#arc_toolbar_report span.like:not(.on)',
-    people: 'span.bilibili-player-video-info-people-text',
+    people: 'div.bilibili-player-video-info-people-number',
   },
   async init() {
     let { collect, app, people } = this.selector
