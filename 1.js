@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bilibili三连
-// @version      0.0.21
+// @version      0.0.22
 // @include      https://www.bilibili.com/video/av*
 // @include      https://www.bilibili.com/video/BV*
 // @include      https://www.bilibili.com/medialist/play/*
@@ -108,11 +108,21 @@ const state = {
     this.render()
   },
   remove_coin_leading_space() {
-    const coin_text = document.querySelector(this.selector.coin + ' i')
-      .nextSibling
-    if (coin_text.nodeType == Node.TEXT_NODE) {
-      coin_text.textContent = coin_text.textContent.trim()
+    const trim = () => {
+      const coin_text = document.querySelector(this.selector.coin + ' i')
+        .nextSibling
+      if (
+        coin_text.nodeType == Node.TEXT_NODE &&
+        coin_text.textContent != coin_text.textContent.trim()
+      ) {
+        coin_text.textContent = coin_text.textContent.trim()
+      }
     }
+    new MutationObserver(trim).observe(
+      document.querySelector(this.selector.coin),
+      { characterData: true, subtree: true }
+    )
+    trim()
   },
   addStyle() {
     const css = `
@@ -319,7 +329,6 @@ const state = {
       }
       click(collect_yes)
       await waitForAllByObserver([collect_dialog], { disappear: true })
-      this.remove_coin_leading_space()
     }
     sanlian.addEventListener('click', async (e) => {
       if (![sanlian, sanlian_icon, sanlian_text].includes(e.target)) return
